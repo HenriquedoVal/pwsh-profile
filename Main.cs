@@ -63,12 +63,12 @@ namespace MyConfig
 			// Set-Alias -Name swtheme -Value Switch-ShellServerTheme
 
 			var pwsh = PowerShell.Create(RunspaceMode.CurrentRunspace);
-			// pwsh.AddCommand("Set-PSReadlineKeyHandler")
-			// 	.AddParameter("Key", "Tab")
-			// 	.AddParameter("Function", "MenuComplete")
-			// 	.AddStatement()
+			pwsh.AddCommand("Set-PSReadlineKeyHandler")
+				.AddParameter("Key", "Tab")
+				.AddParameter("Function", "MenuComplete")
+				.AddStatement()
 
-			pwsh.AddCommand("Set-Alias")
+				.AddCommand("Set-Alias")
 				.AddParameter("Name", "hist")
 				.AddParameter("Value", "Search-ShellServerHistory")
 				.AddStatement()
@@ -84,11 +84,6 @@ namespace MyConfig
 				.Invoke();
 
 			pwsh.Dispose();
-
-
-			// inst = Activator.CreateInstance(SetPSReadLineKeyHandlerCommand);
-			// var field = SetPSReadLineKeyHandlerCommand.GetField("Key");
-			// Console.WriteLine(field is null);
         }
     }
 }
