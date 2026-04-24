@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Management.Automation;
 
 namespace MyConfig
@@ -11,7 +12,7 @@ namespace MyConfig
             Type SetPSReadLineOption = null;
 
             var Asm = AppDomain.CurrentDomain.Load(
-                "Microsoft.PowerShell.PSReadLine2"
+                "Microsoft.PowerShell.PSReadLine"
             );
 
             PSConsoleReadLine = Asm.GetType(
@@ -28,7 +29,7 @@ namespace MyConfig
                 throw new Exception("Types not found");
 
             var inst = Activator.CreateInstance(SetPSReadLineOption);
-            
+
             const int Vi = 2;
             var Prop = SetPSReadLineOption.GetProperty("EditMode");
             Prop.SetValue(inst, Vi);
@@ -53,7 +54,7 @@ namespace MyConfig
             );
             Prop = SetPSReadLineOption.GetProperty("ViModeChangeHandler");
             Prop.SetValue(inst, modeChange);
-            
+
             Prop = SetPSReadLineOption.GetProperty("ContinuationPrompt");
             Prop.SetValue(inst, "> ");
 
@@ -61,45 +62,51 @@ namespace MyConfig
 
             SetOptions.Invoke(null, new object[] {inst});
 
-            // Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-            // Set-Alias -Name hist -Value Search-ShellServerHistory
-            // Set-Alias -Name swopt -Value Switch-ShellServerOptions
-            // Set-Alias -Name swtheme -Value Switch-ShellServerTheme
-
             var pwsh = PowerShell.Create(RunspaceMode.CurrentRunspace);
             pwsh.AddCommand("Set-PSReadlineKeyHandler")
                 .AddParameter("Key", "Tab")
                 .AddParameter("Function", "MenuComplete")
-                .AddStatement()
 
-                .AddCommand("Set-Alias")
-                .AddParameter("Name", "hist")
-                .AddParameter("Value", "Search-ShellServerHistory")
-                .AddStatement()
+                // .AddStatement()
+                // .AddCommand("Set-Alias")
+                // .AddParameter("Name", "hist")
+                // .AddParameter("Value", "Search-ShellServerHistory")
 
-                .AddCommand("Set-Alias")
-                .AddParameter("Name", "swopt")
-                .AddParameter("Value", "Switch-ShellServerOptions")
-                .AddStatement()
-
-                .AddCommand("Set-Alias")
-                .AddParameter("Name", "swtheme")
-                .AddParameter("Value", "Switch-ShellServerTheme")
                 .Invoke();
 
             pwsh.Dispose();
 
-            string current_path = Environment.GetEnvironmentVariable("path");
-            if (current_path is null) return;
+            Environment.SetEnvironmentVariable("PAGER", "less");
 
-            string to_add = Environment.ExpandEnvironmentVariables("%userprofile%\\ps_scripts");
-            foreach (string path in current_path.Split(';'))
-            {
-                if (path == to_add) return;
+            Environment.SetEnvironmentVariable("PY_PYTHON", "3.13");
+            Environment.SetEnvironmentVariable("DOTNET_CLI_UI_LANGUAGE", "en");
+            Environment.SetEnvironmentVariable("VCPKG_ROOT", "A:\\Dev\\vcpkg");
+
+            string[] paths_expand_path = {
+                Environment.ExpandEnvironmentVariables("%userprofile%\\ps_scripts"),
+                Environment.ExpandEnvironmentVariables("%VCPKG_ROOT%"),
+                "A:\\Dev\\Odin",
+                "D:\\henri\\programs\\unmanaged",
+                "C:\\Program Files\\Windows Defender",
+                "C:\\Program Files\\OpenSSL-Win64\\bin",
+            };
+
+            foreach (string p in paths_expand_path)
+                add_to_path(p);
+        }
+
+        void add_to_path(string s) {
+            string path = Environment.GetEnvironmentVariable("PATH");
+            Debug.Assert(path is not null);
+
+            foreach (string p in path.Split(';')) {
+                if (p == s) {
+                    return;
+                }
             }
 
-            string semi = current_path[current_path.Length - 1] == ';' ? "" : ";";
-            Environment.SetEnvironmentVariable("path", $"{current_path}{semi}{to_add}");
+            string semi = path.EndsWith(';') ? "" : ";";
+            Environment.SetEnvironmentVariable("PATH", $"{path}{semi}{s}");
         }
     }
 }
